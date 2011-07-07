@@ -1,0 +1,58 @@
+#!/bin/bash
+
+# A quick wrapper for netcfg
+# 
+# TODO:
+# Support for adding common netcfg profiles
+#
+
+
+GETSTAT=`netcfg current`
+NETARRAY=(`find /etc/network.d/ -maxdepth 1 -type f | sed s_/etc/network.d/__`)
+OPTIONS="reconnect connect quit"
+
+
+poke(){
+if [ ! -z $GETSTAT ]; then
+	echo "Wifi profile '$GETSTAT' active."
+	echo "Restarting $GETSTAT."
+	sudo netcfg -d $GETSTAT && sudo netcfg $GETSTAT
+	break
+else
+	echo "No networks detected."
+	break
+fi    }
+
+
+profiles(){
+
+if [ ! -z $GETSTAT ]; then
+	echo "Disconnecting $GETSTAT..."
+	sudo netcfg -d $GETSTAT
+fi
+echo
+
+echo ':: Select a profile to connect to...'
+select i in ${NETARRAY[*]}; do
+	echo "$i"
+	case $i in
+		*) sudo netcfg $i && break 2
+		;;
+	esac
+done       }
+
+
+menu(){
+echo ":: Wireless configuration... "
+select choice in $OPTIONS; do
+	case $choice in
+		reconnect) poke
+		;;
+		connect) profiles
+		;;
+		quit) break
+		;;
+	esac
+done  }
+
+menu
